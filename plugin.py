@@ -57,16 +57,30 @@ class TailGame:
         self.irc.sendMsg(ircmsgs.privmsg(self.chan, msg))
 
     def diff_handle(self, gamediff):
-        for play in gamediff.plays:
-            self.play_handle(play)
         self.game = gamediff.after
+        for play in gamediff.plays:
+            self.play_handle(play, (play is gamediff.plays[-1]))
         self.topic_update()
 
-    def play_handle(self, play):
+    def play_handle(self, play, is_last):
+        team = ''
+        down = ''
+        nowdown = ''
         if play.team:
-            self.privmsg(play.team+": "+play.desc)
-        else:
-            self.privmsg(play.desc)
+            team = play.team + ": "
+        if play.down and play.yards_togo:
+            down = play.down
+            down = str(down) + ('0PS!', 'st', 'nd', 'rd', 'th')[down] + " & " + str(play.yards_togo)
+            down = "[%s] " % down
+        if is_last:
+            nowdown = ' Now %s.' % self.get_down()
+        self.privmsg(team + down + play.desc + nowdown)
+
+    def get_down(self):
+        down = self.game.down
+        down = str(down) + ('0PS!', 'st', 'nd', 'rd', 'th')[down]
+        yards = str(self.game.togo)
+        return down+" & "+yards
 
     def get_quarter(self):
         if self.game.time.is_pregame():
@@ -78,7 +92,7 @@ class TailGame:
         else:
             q = self.game.time.quarter
             if q > 3: q -= 1 # Halftime is the 3rd quarter for some reason =\
-            q = str(q) + ('0PS!', 'st', 'nd', 'rd', 'th')[q]
+            q = str(q) + ('0PS!', 'st', 'nd', 'rd', 'th')[q] + ' quarter'
         return q
 
     def topic_update(self):
