@@ -25,6 +25,19 @@ except:
 
 team_names = {t[0]: t[1]+' '+t[2] for t in nflgame.teams}
 
+def actually_threaded(f):
+    """Makes sure a command spawns a NEW thread when called.
+    supybot.commands.thread() seems to just ensure that the module is running
+    in a separate thread, but sometimes we need individual functions
+    threaded. (Say, the main loop which does sleep() waits.) This is probably
+    the wrong way to do this; improvements are welcome."""
+    def newf(self, irc, msg, args, *L, **kwargs):
+        realargs = (self, irc, msg, args) + tuple(L)
+        t = world.SupyThread(target=f, args=realargs, kwargs=kwargs)
+        t.setDaemon(True)
+        t.start()
+    return utils.python.changeFunctionName(newf, f.func_name, f.__doc__)
+
 class TailGame:
     def __init__(self, game, irc, chan, chan_index, module):
         self.game = game
@@ -95,14 +108,14 @@ class TailNFL(callbacks.Plugin):
         self._irc.sendMsg(ircmsgs.join(self._chan_lobby))
         self._irc.sendMsg(ircmsgs.joins([self._chan_format%str(i) for i in range(1, 10)]))
 
+    @actually_threaded
     def tailnflinit(self, irc, msg, args):
         self.privmsg('TailNFL is online.')
         nflgame.live.run(self._main_cb)
 
     def listgames(self, irc, msg, args):
-        irc.reply("derp")
-        #for tailgame in self._games.values():
-        #    irc.reply("%s at %s in %s" % (tailgame.away_long, tailgame.home_long, tailgame.chan))
+        for tailgame in self._games.values():
+            irc.reply("%s at %s in %s" % (tailgame.away_long, tailgame.home_long, tailgame.chan))
 
     def privmsg(self, msg):
         self._irc.sendMsg(ircmsgs.privmsg(self._chan_lobby, msg))
