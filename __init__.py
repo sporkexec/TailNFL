@@ -6,8 +6,7 @@
 ###
 
 """
-Add a description of the plugin (to be presented to the user inside the wizard)
-here.  This should describe *what* the plugin does.
+Provides live play-by-play announcements for NFL games.
 """
 
 import supybot
@@ -17,7 +16,7 @@ import supybot.world as world
 # in here if you're keeping the plugin in CVS or some similar system.
 __version__ = "0.0"
 
-# XXX Replace this with an appropriate author or supybot.Author instance.
+# Replace this with an appropriate author or supybot.Author instance.
 __author__ = supybot.Author('Jacob Courtneay', 'sporkexec',
                             'jacob@sporkexec.com')
 
@@ -26,7 +25,7 @@ __author__ = supybot.Author('Jacob Courtneay', 'sporkexec',
 __contributors__ = {}
 
 # This is a url where the most recent plugin package can be downloaded.
-__url__ = '' # 'http://supybot.com/Members/yourname/TailNFL/download'
+__url__ = 'https://github.com/sporkexec/TailNFL'
 
 from . import config
 from . import plugin

@@ -14,7 +14,6 @@ import supybot.callbacks as callbacks
 import supybot.world as world
 import nflgame
 import nflgame.live
-from sha import sha
 try:
     from supybot.i18n import PluginInternationalization
     _ = PluginInternationalization('TailNFL')
@@ -91,8 +90,9 @@ class TailGame:
             self.irc.sendMsg(ircmsgs.topic(self.chan, self.topic))
 
 class TailNFL(callbacks.Plugin):
-    """Add the help for "@plugin help TailNFL" here
-    This should describe *how* to use this plugin."""
+    """Provides live play-by-play announcements for NFL games.
+    Use "tailnflinit" to begin the main loop and start announcing events.
+    Use "listgames" to get a list of ongoing games and their channels."""
     threaded = True
 
     def __init__(self, irc):
@@ -110,12 +110,23 @@ class TailNFL(callbacks.Plugin):
 
     @actually_threaded
     def tailnflinit(self, irc, msg, args):
+        """takes no arguments
+
+        Starts the main loop to poll and announce events."""
         self.privmsg('TailNFL is online.')
         nflgame.live.run(self._main_cb)
+    tailnflinit = wrap(tailnflinit, ['owner'])
 
     def listgames(self, irc, msg, args):
-        for tailgame in self._games.values():
-            irc.reply("%s at %s in %s" % (tailgame.away_long, tailgame.home_long, tailgame.chan))
+        """takes no arguments
+
+        Displays active games and which channel they are in."""
+        if len(self._games):
+            for tailgame in self._games.values():
+                irc.reply("%s at %s in %s" % (tailgame.away_long, tailgame.home_long, tailgame.chan))
+        else:
+            irc.reply("No active games.") #TODO: Find next game in schedule.
+    listgames = wrap(listgames)
 
     def privmsg(self, msg):
         self._irc.sendMsg(ircmsgs.privmsg(self._chan_lobby, msg))
