@@ -73,7 +73,7 @@ class TailGame:
         self.privmsg("Now playing: %s at %s" % (self.away_long, self.home_long))
 
     def privmsg(self, msg):
-        self.irc.sendMsg(ircmsgs.privmsg(self.chan, msg))
+        self.irc.queueMsg(ircmsgs.privmsg(self.chan, msg))
 
     def diff_handle(self, gamediff):
         self.game = gamediff.after
@@ -122,7 +122,7 @@ class TailGame:
         topic = "%s - %s" % (score, quarter)
         if topic != self.topic:
             self.topic = topic
-            self.irc.sendMsg(ircmsgs.topic(self.chan, self.topic))
+            self.irc.queueMsg(ircmsgs.topic(self.chan, self.topic))
 
     def play_highlight(self, playdesc):
         for search, replace in play_highlights.iteritems():
@@ -145,8 +145,8 @@ class TailNFL(callbacks.Plugin):
         self._games = {}
         self._irc = irc
 
-        self._irc.sendMsg(ircmsgs.join(self._chan_lobby))
-        self._irc.sendMsg(ircmsgs.joins([self._chan_format%str(i) for i in range(1, 21)]))
+        self._irc.queueMsg(ircmsgs.join(self._chan_lobby))
+        self._irc.queueMsg(ircmsgs.joins([self._chan_format%str(i) for i in range(1, 21)]))
 
     @actually_threaded
     def tailnflinit(self, irc, msg, args):
@@ -169,7 +169,7 @@ class TailNFL(callbacks.Plugin):
     listgames = wrap(listgames)
 
     def privmsg(self, msg):
-        self._irc.sendMsg(ircmsgs.privmsg(self._chan_lobby, msg))
+        self._irc.queueMsg(ircmsgs.privmsg(self._chan_lobby, msg))
 
     def _main_cb(self, active_games, finished_games, gamediffs):
         for game in active_games:
@@ -192,7 +192,7 @@ class TailNFL(callbacks.Plugin):
         # Take chan
         self._chans_used.append(chan_index)
         chan = self._chan_format % chan_index
-        self._irc.sendMsg(ircmsgs.join(chan))
+        self._irc.queueMsg(ircmsgs.join(chan))
         # Initialize game
         self._games[game.gamekey] = TailGame(game, self._irc, chan, chan_index, self)
 
