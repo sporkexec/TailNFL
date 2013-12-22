@@ -72,7 +72,7 @@ class TailGame:
             down = play.down
             down = str(down) + ('0PS!', 'st', 'nd', 'rd', 'th')[down] + " & " + str(play.yards_togo)
             down = "[%s] " % down
-        if is_last:
+        if is_last and self.game.down:
             nowdown = ' Now %s.' % self.get_down()
         self.privmsg(team + down + play.desc + nowdown)
 
