@@ -24,6 +24,27 @@ except:
 
 team_names = {t[0]: t[1]+' '+t[2] for t in nflgame.teams}
 
+
+play_highlights = { # search: (fg, bg, is_bold)
+    'herp': ('white', 'red', False),
+    'DA BEARS': ('blue', 'orange', True),
+    'PENALTY': ('black', 'yellow', True),
+    'TOUCHDOWN': ('white', 'green', True),
+    'field goal is GOOD': ('white', 'green', True),
+    'INTERCEPTED': ('white', 'orange', True),
+    'MUFFS': ('blue', None, True),
+    'FUMBLES': ('white', 'blue', True),
+    'TWO-POINT CONVERSION ATTEMPT': ('green', None, True),
+    'challenged': ('white', 'red', True),
+}
+# Transform highlighting rules into something more usable.
+for key, (fg, bg, is_bold) in play_highlights.iteritems():
+    val = ircutils.mircColor(key, fg, bg)
+    if is_bold:
+        val = ircutils.bold(val)
+    play_highlights[key] = val
+
+
 def actually_threaded(f):
     """Makes sure a command spawns a NEW thread when called.
     supybot.commands.thread() seems to just ensure that the module is running
@@ -74,7 +95,9 @@ class TailGame:
             down = "[%s] " % down
         if is_last and self.game.down:
             nowdown = ' Now %s.' % self.get_down()
-        self.privmsg(team + down + play.desc + nowdown)
+        output = team + down + play.desc + nowdown
+        output = self.play_highlight(output)
+        self.privmsg(output)
 
     def get_down(self):
         down = self.game.down
@@ -102,6 +125,11 @@ class TailGame:
         if topic != self.topic:
             self.topic = topic
             self.irc.sendMsg(ircmsgs.topic(self.chan, self.topic))
+
+    def play_highlight(self, playdesc):
+        for search, replace in play_highlights.iteritems():
+            playdesc = playdesc.replace(search, replace)
+        return playdesc
 
 class TailNFL(callbacks.Plugin):
     """Provides live play-by-play announcements for NFL games.
