@@ -26,8 +26,6 @@ team_names = {t[0]: t[1]+' '+t[2] for t in nflgame.teams}
 
 
 play_highlights = { # search: (fg, bg, is_bold)
-    'herp': ('white', 'red', False),
-    'DA BEARS': ('blue', 'orange', True),
     'PENALTY': ('black', 'yellow', True),
     'TOUCHDOWN': ('white', 'green', True),
     'field goal is GOOD': ('white', 'green', True),
