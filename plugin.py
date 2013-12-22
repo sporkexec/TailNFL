@@ -120,7 +120,7 @@ class TailNFL(callbacks.Plugin):
         self._irc = irc
 
         self._irc.sendMsg(ircmsgs.join(self._chan_lobby))
-        self._irc.sendMsg(ircmsgs.joins([self._chan_format%str(i) for i in range(1, 10)]))
+        self._irc.sendMsg(ircmsgs.joins([self._chan_format%str(i) for i in range(1, 21)]))
 
     @actually_threaded
     def tailnflinit(self, irc, msg, args):
