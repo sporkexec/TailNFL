@@ -14,6 +14,7 @@ import supybot.callbacks as callbacks
 import supybot.world as world
 import nflgame
 import nflgame.live
+import threading
 try:
     from supybot.i18n import PluginInternationalization
     _ = PluginInternationalization('TailNFL')
@@ -43,7 +44,7 @@ for key, (fg, bg, is_bold) in play_highlights.iteritems():
     play_highlights[key] = val
 
 
-def actually_threaded(f):
+def threaded_loop(f):
     """Makes sure a command spawns a NEW thread when called.
     supybot.commands.thread() seems to just ensure that the module is running
     in a separate thread, but sometimes we need individual functions
@@ -145,15 +146,33 @@ class TailNFL(callbacks.Plugin):
         self._games = {}
         self._irc = irc
 
+        self._loop_should_stop = threading.Event()
+        self._loop_is_stopped = threading.Event()
+        self._loop_is_stopped.set()
         self._irc.queueMsg(ircmsgs.join(self._chan_lobby))
         self._irc.queueMsg(ircmsgs.joins([self._chan_format%str(i) for i in range(1, 21)]))
 
-    @actually_threaded
+    def _stop_loop(self):
+        print('telling loop to stop')
+        self._loop_should_stop.set()
+        print('waiting for loop to stop...')
+        self._loop_is_stopped.wait()
+        print('loop stopped, proceeding')
+
+    def _check_iteration(self):
+        if self._loop_should_stop.is_set():
+            print('[thread] stop received, acknowledging')
+            self._loop_is_stopped.set()
+            print('[thread] raising StopIteration')
+            raise StopIteration()
+
+    @threaded_loop
     def tailnflinit(self, irc, msg, args):
         """takes no arguments
 
         Starts the main loop to poll and announce events."""
         self.privmsg('TailNFL is online.')
+        self._loop_is_stopped.clear()
         nflgame.live.run(self._main_cb)
     tailnflinit = wrap(tailnflinit, ['owner'])
 
@@ -172,6 +191,7 @@ class TailNFL(callbacks.Plugin):
         self._irc.queueMsg(ircmsgs.privmsg(self._chan_lobby, msg))
 
     def _main_cb(self, active_games, finished_games, gamediffs):
+        self._check_iteration() # Should we exit the loop?
         for game in active_games:
             if game.gamekey not in self._games:
                 self._add_game(game)
@@ -201,6 +221,11 @@ class TailNFL(callbacks.Plugin):
         self.privmsg('%s - Final (%s now open)' % (game.nice_score(), tailgame.chan))
         self._chans_used.remove(tailgame.chan_index)
         del self._games[game.gamekey]
+
+    def die(self):
+        print('called die')
+        self._stop_loop()
+        self.privmsg('TailNFL is exiting.')
 
 Class = TailNFL
 # vim:set shiftwidth=4 softtabstop=4 expandtab textwidth=79:
